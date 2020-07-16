@@ -72,8 +72,8 @@ Reaction←_
      
           ⍝ Calculate the array values row by row:
           ⍝ for each sum from 1 to half consider ≢nums subsets.
-          ⍝ Outer dnf takes nums on the left, sum on the right.
-          ⍝ Inner dnf takes  sum on the left, a subset of nums on the right.
+          ⍝ Outer dfn takes nums  on the left, sum+1 on the right.
+          ⍝ Inner dfn takes sum+1 on the left, a subset of nums on the right.
           ⍝ Scan operator with logical OR ∨\ is used to propagate a solution to the
           ⍝ right. Because a solution for a subset also works for bigger subsets.
      ign←(⊂⍵){
@@ -85,6 +85,7 @@ Reaction←_
      
           ⍝ Extract a concrete solution from the matrix by
           ⍝ backtracking from the target sum to zero recursively.
+          ⍝ The dfn takes sum+1 on the left and subset of nums on the right.
      mask←(half+1){
          0=≢⍵:⍬
          M[⍺;≢⍵]∨⍺=1:(⍺ ∇ ¯1↓⍵),0
@@ -143,8 +144,7 @@ Reaction←_
               ⍝ 5) Return "???" if not found.
      
          ('@'≢⊃¯1↑⍵)∨(1≥≢⍵)∨'@'≢⊃⍵:⍵
-         name←¯1↓1↓⍵
-         0=≢name:'@'
+         0=≢name←¯1↓1↓⍵:'@'
          (⊂name)∊names:⍕ns⍎name
          '???'
      }
@@ -184,38 +184,38 @@ Reaction←_
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 7, Task 3 - ReadUPC
      
-          ⍝ Check the input for correctness:
-          ⍝ - length is 95
-          ⍝ - all items are either 0 or 1
-          ⍝ - even parity
-     95≠≢⍵:¯1
+          ⍝ Perform some checks for the input correctness:
+          ⍝ - input is a vector of length 95
+          ⍝ - all its elements are either 0 or 1
+          ⍝ - the parity of bits is even
+     (1≠⍴⍴⍵)∨95≠≢∊⍵:¯1
      ~(∧/∊∘0 1)⍵:¯1
-     0≠2|+/⍵:¯1
+     2|+/⍵:¯1
      
-          ⍝ Partition the boolean array
+          ⍝ Partition the boolean vector into logical parts
      B left M right E←((1@1 4 46 51 93)95⍴0)⊂⍵
      
-          ⍝ Check B, M, E parts for correctness
-     1 0 1≢B:¯1
-     1 0 1≢E:¯1
-     0 1 0 1 0≢M:¯1
+          ⍝ Check B, M, E parts: convert binary vector to integer and compare
+          ⍝ with the numeric value 1365 (which is (11⍴1 0) in binary).
+     1365≠2⊥B,M,E:¯1
      
-          ⍝ Generate digit codes
+          ⍝ Decode the digits:
+          ⍝ 1) Generate a vector of codes (boolean vectors) for all decimal digits.
+          ⍝ 2) Swap and reverse left/right parts (if needed), invert the right side.
+          ⍝    This is to handle the opposite scanning order.
+          ⍝ 3) Partition into 12 chunks, then look them up in the vector of codes.
+          ⍝    This obtains the digits.
      codes←((7⍴2)⊤⊢)¨13 25 19 61 35 49 47 59 55 11
-     
-          ⍝ Reflect left/right (if needed) and invert the right side
      LR←left{(⊂7↑⍺)∊codes:⍺,~⍵ ⋄ (⌽⍵),~⌽⍺}right
-     
-          ⍝ Convert to digits: partition into 12 parts, then look up among codes
      digs←¯1+codes⍳(84⍴(1,6⍴0))⊂LR
      
           ⍝ Final checks:
-          ⍝ - where all digit codes located in the codes table?
+          ⍝ - were all digit codes located in the codes vector?
           ⍝ - verify the "check digit"
      10∊digs:¯1
      (12⊃digs)≠CheckDigit 11↑digs:¯1
      
-     digs       ⍝ Return the result
+     digs       ⍝ Return the resulting digits
  }
 
  Steps←{
@@ -307,10 +307,10 @@ Reaction←_
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 7, Task 2 - WriteUPC
      
-          ⍝ Check the input for correctness:
-          ⍝ 1) Vector size is expected to be 11
-          ⍝ 2) Return if any number is not an integer from the range 0..9
-     11≠≢⍵:¯1
+          ⍝ Perform some checks for the input correctness:
+          ⍝ - input is a vector of length 11
+          ⍝ - the elements are integers from the range 0..9
+     (1≠⍴⍴⍵)∨11≠≢∊⍵:¯1
      (∨/(⊢≠⌊)∨0∘≤⍲≤∘9)⍵:¯1
      
           ⍝ Perform the conversion:
@@ -381,8 +381,29 @@ Reaction←_
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 4, Task 2 - sset
      
-          ⍝ Recursive exponentiation by squaring (modulus 1e6)
-          ⍝ Standard algorithm.
+          ⍝ Because each element of a set can be included or excluded from a subset,
+          ⍝ there are 2*n combinations. But we cannot just use the primitive
+          ⍝ function Power (*), because it would exceed the limits for integer size.
+          ⍝ Thus, we can do exponentiation by squaring.
+     
+          ⍝ Basically, we evaluate three cases:
+          ⍝ 1) n is 1:
+          ⍝       return 2, because there are two subsets of a set with one
+          ⍝       element: empty set and itself.
+          ⍝ 2) n is even:
+          ⍝       find x*n÷2 modulus n (recursively), square it,
+          ⍝       find the residue modulus 1e6 and return the result.
+          ⍝ 3) n is odd and bigger than zero:
+          ⍝       find x*((n-1)÷2) modulus n (recursively), square it, multiply by 2
+          ⍝       (because the extra element can be either included or excluded),
+          ⍝       find the residue modulus 1e6 and return the result.
+     
+          ⍝ Taking the residue ensures that we always hold the lower 6 decimal
+          ⍝ digits (up to 20 bits) towards the final product 2*n.
+          ⍝ Squaring and mulitplying by 2 makes the intermediate result up to 41
+          ⍝ bits long. But this is well within the limits of 52-bit fraction part
+          ⍝ of IEEE 754 64-bit floating-point format, which is used by Dyalog APL.
+          ⍝ Thus we can arrive to the final answer precisely.
      
      ⍵>1:1000000|(1+2|⍵)×(∇⌊2÷⍨⍵)*2 ⋄ 2
  }
