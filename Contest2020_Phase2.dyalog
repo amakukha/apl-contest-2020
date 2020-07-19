@@ -43,7 +43,7 @@ Reaction←_
           ⍝    For this, generate matrix of all boolean vectors of size (¯1+≢⍵).
           ⍝ 3) Multiply this matrix by nums to get the sums of each possible subset.
           ⍝ 4) See if there is a subset which sums to the half of the total sum.
-          ⍝ 5) If there is no such subset then return ⍬.
+          ⍝ 5) If there is no such subset, then return ⍬.
           ⍝ 6) Otherwise split the numbers into two groups and return them.
           ⍝    One group represents the found subset and another – the other half of
           ⍝    the total sum.
@@ -70,7 +70,7 @@ Reaction←_
           ⍝ Second index is the number of first nums considered + 1.
      M←(1(1+≢⍵))⍴1      ⍝ zero sum is always possible
      
-          ⍝ Calculate the array values row by row:
+          ⍝ Calculate the matrix values row by row:
           ⍝ for each sum from 1 to half consider ≢nums subsets.
           ⍝ Outer dfn takes nums  on the left, sum+1 on the right.
           ⍝ Inner dfn takes sum+1 on the left, a subset of nums on the right.
@@ -85,11 +85,13 @@ Reaction←_
      
           ⍝ Extract a concrete solution from the matrix by
           ⍝ backtracking from the target sum to zero recursively.
-          ⍝ The dfn takes sum+1 on the left and subset of nums on the right.
+          ⍝ Construct the boolean vector "mask" as the result.
+          ⍝ This dfn takes sum+1 on the left and subset of nums on the right.
+          ⍝ It considers if the rightmost number should be included into the mask.
      mask←(half+1){
-         0=≢⍵:⍬
-         M[⍺;≢⍵]∨⍺=1:(⍺ ∇ ¯1↓⍵),0
-         ((⍺-⊃¯1↑⍵)∇ ¯1↓⍵),1
+         0=≢⍵:⍬                     ⍝ all numbers were considered
+         M[⍺;≢⍵]∨⍺=1:(⍺ ∇ ¯1↓⍵),0   ⍝ no need to include the rightmost number
+         ((⍺-⊃¯1↑⍵)∇ ¯1↓⍵),1        ⍝ otherwise: include the rightmost number
      }⍵
      (mask/⍵)((~mask)/⍵)
  }
@@ -98,12 +100,12 @@ Reaction←_
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 7, Tasl 1 - CheckDigit
      
-          ⍝ Derived from check digit definition:
+          ⍝ Directly derived from check digit definition:
           ⍝ 1) Multiply the first 11 digits by (3, 1, ..., 3) elementwise
           ⍝ 2) Find the sum and negate it
           ⍝ 3) Find the residue modulus 10 – this is the check digit
      
-     10|-+/(11⍴3 1)×11↑⍵
+     10|-(11⍴3 1)+.×11↑⍵
  }
 
  DiveScore←{
@@ -128,22 +130,25 @@ Reaction←_
      ns←⎕JSON⊃⎕NGET ⍵
      names←ns.⎕NL ¯2
      
-          ⍝ 1) Load the template file and find all the ats (@).
-          ⍝ 2) Find a partitioning of text based on positions of ats.
-          ⍝ 3) Modify the partitioning to place all ats into one partition.
-          ⍝    This is achieved by decrementing values at every other at.
+          ⍝ 1) Load the template file, find all the at signs and find a
+          ⍝    partitioning of text based on positions of the at signs.
+          ⍝ 2) Modify the partitioning to place every other at sign into a single
+          ⍝    partition with the preceding at sign.
+          ⍝    This is achieved by decrementing values at every other at sign
+          ⍝    position in the partitioning.
      parts←1++\ats←'@'=template←⊃⎕NGET ⍺
      parts[⍸(≠parts)∧ats∧(2|parts)]-←1
      
           ⍝ A helper function to process partitions
      replace←{
-              ⍝ 1) Return parameter without changes if it's not a merge area.
-              ⍝ 2) Obtain the name of the merge area.
-              ⍝ 3) Special case: if the name is empty it means at(@) character.
-              ⍝ 4) Look for the merge area name in the namespace.
-              ⍝ 5) Return "???" if not found.
+              ⍝ 1) Return the parameter without changes if it's not a merge area
+              ⍝    (that is if it doesn't start and end with an at sign).
+              ⍝ 2) Obtain the name of the merge area. If it's empty: return at sign.
+              ⍝ 3) Look for the merge area name in the namespace.
+              ⍝    Return the formatted value of the variable if it's there.
+              ⍝ 4) Return "???" otherwise.
      
-         ('@'≢⊃¯1↑⍵)∨(1≥≢⍵)∨'@'≢⊃⍵:⍵
+         ('@'≠¯1↑⍵)∨(1≥≢⍵)∨'@'≠⊃⍵:⍵
          0=≢name←¯1↓1↓⍵:'@'
          (⊂name)∊names:⍕ns⍎name
          '???'
@@ -200,14 +205,14 @@ Reaction←_
      1365≠2⊥B,M,E:¯1
      
           ⍝ Decode the digits:
-          ⍝ 1) Generate a vector of codes (boolean vectors) for all decimal digits.
-          ⍝ 2) Swap and reverse left/right parts (if needed), invert the right side.
-          ⍝    This is to handle the opposite scanning order.
-          ⍝ 3) Partition into 12 chunks, then look them up in the vector of codes.
-          ⍝    This obtains the digits.
-     codes←((7⍴2)⊤⊢)¨13 25 19 61 35 49 47 59 55 11
-     LR←left{(⊂7↑⍺)∊codes:⍺,~⍵ ⋄ (⌽⍵),~⌽⍺}right
-     digs←¯1+codes⍳(84⍴(1,6⍴0))⊂LR
+          ⍝ 1) Swap and reverse left and right parts if the first seven bits have
+          ⍝    even parity. (This is to handle the reverse scanning order.)
+          ⍝ 2) Invert the right part, merge two parts into a single boolean vector.
+          ⍝ 3) Partition it into 12 chunks, then convert them into integers and look
+          ⍝    those integers up in the vector of expected values.
+          ⍝ 4) Subtracting 1 from the indices obtains the digit values.
+     LR←left{2|+/7↑⍺:⍺,~⍵ ⋄ (⌽⍵),~⌽⍺}right
+     digs←¯1+{13 25 19 61 35 49 47 59 55 11⍳2⊥⍵}¨(84⍴1 0 0 0 0 0 0)⊂LR
      
           ⍝ Final checks:
           ⍝ - were all digit codes located in the codes vector?
@@ -229,7 +234,7 @@ Reaction←_
      ⍺=0:⍵[1]
      
           ⍝ My solution consists of three primary specialized solutions depending on
-          ⍝ the value of p. Each solution is optimized for it's case.
+          ⍝ the value of p. Each solution is optimized for its case.
      
           ⍝ If p=1 then it is the same as problem 5 from phase I:
           ⍝ 1) Generate a vector of integers from 0 to d, where d = to - from.
@@ -247,7 +252,7 @@ Reaction←_
           ⍝ If p>0 then it is the absolute step size:
           ⍝ 1) Calculate difference d = to - from.
           ⍝ 2) Calculate the number of steps n ← ⌈(|d)÷p
-          ⍝ 3) Generate vector of integers from 0 to n.
+          ⍝ 3) Generate a vector of integers from 0 to n.
           ⍝ 4) Multiply this vector by the direction of d and by the step size p.
           ⍝ 5) Add "from" to this vector.
           ⍝ 6) Replace the last element with "to" (⍵[2]).
@@ -258,29 +263,37 @@ Reaction←_
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 9, Task 1 - Weights
      
-          ⍝ Read the mobile from file and format it into a 2D array
-     M←⍕↑⊃(⎕NGET ⍵ 1)[1]
+          ⍝ 1) Read the mobile from file as a vector of lines.
+          ⍝ 2) Remove lines which exactly repeat the previous lines and contain only
+          ⍝    vertical bars (│). Such lines don't bring any useful information.
+          ⍝    (This filtering step allows to process files which are very deep
+          ⍝    without running out of memory. For example, 10K characters wide, 100K
+          ⍝    lines deep. Without filtering, such a file would be represented by a
+          ⍝    matrix with 1 billion characters!)
+          ⍝ 3) Format the rest of the lines into a text matrix (2D).
+     M←⊃(⎕NGET ⍵ 1)[1]
+     q←((∨/(~⍤∊∘'│ '))¨M)∨1,2≢/M
+     M←⍕↑q/M
      
-          ⍝ Find the distinct weight names.
+          ⍝ Find the distinct weight names to know how many variable are there.
           ⍝ Assumption: all characters other than " ┌─┴┐│" and newline are weights.
-     N←∪({~⍵∊' ┌─┴┐│'}¨∊M)/∊M
-     nw←≢N      ⍝ number of weights
+     N←∪' ┌─┴┐│'~⍨∊M
      
           ⍝ Coefficients matrix: specifies the relationships between weights.
-          ⍝ It is such a matrix that satisfies (C+.×W)≢(1,(nw-1)⍴0),
+          ⍝ It is such a matrix that satisfies (C+.×W)≡(1,(¯1+≢N)⍴0),
           ⍝ where W is the solution vector (numeric values of weights).
-     C←(1@1)(1 nw)⍴0    ⍝ first weight is assumed to be 1 (for now)
+     C←(1@1)(1(≢N))⍴0    ⍝ first weight is assumed to be 1 (for now)
      
-          ⍝ Define recursive function for parsing
+          ⍝ Define recursive function for parsing.
           ⍝ Returns a boolean vector for weights found in the sub-mobile (sub-tree)
           ⍝ Meanwhile, appends the matrix C as it goes (see the next function)
      descent←{                      ⍝ this function parses input vertically
          y←⍺+¯1+⌊/⍸'│'≠(⍺-1)↓M[;⍵]  ⍝ find first non-'│' from here down
-         '┴'=M[y;⍵]:y explore ⍵     ⍝ explore new level if found
-         (1@(N⍳M[y;⍵]))nw⍴0         ⍝ otherwise: turn weight name into a vector
+         '┴'=M[y;⍵]:y explore ⍵     ⍝ explore new lever if fulcrum is found
+         (1@(N⍳M[y;⍵]))(≢N)⍴0       ⍝ otherwise: turn weight name into a vector
      }
      
-          ⍝ Parses a level and adds the resulting relations between weights into C
+          ⍝ Parses a lever and adds the resulting relations between weights into C
      explore←{                      ⍝ this function parses input horizontally
          r←'─'≠M[⍺;]                ⍝ find all non-horizontal bars in this row
          x1←⌈/⍸(¯1+⍵)↑r             ⍝ find first non-'─' on the left
@@ -288,7 +301,7 @@ Reaction←_
          w1←(⍺+1)descent x1         ⍝ parse left sub-mobile
          w2←(⍺+1)descent x2         ⍝ parse right sub-mobile
          cfs←((⍵-x1)×w1)-(x2-⍵)×w2  ⍝ relationship between weights here (coefs)
-         C⍪←(1 nw)⍴cfs÷∨/cfs        ⍝ divide these coefs by GCD and add to C
+         C⍪←cfs÷∨/cfs               ⍝ divide these coefs by GCD and add to C
          w1+w2                      ⍝ return all the weights of this sub-mobile
      }
      
@@ -307,7 +320,7 @@ Reaction←_
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 7, Task 2 - WriteUPC
      
-          ⍝ Perform some checks for the input correctness:
+          ⍝ Check the input for correctness:
           ⍝ - input is a vector of length 11
           ⍝ - the elements are integers from the range 0..9
      (1≠⍴⍴⍵)∨11≠≢∊⍵:¯1
@@ -315,14 +328,12 @@ Reaction←_
      
           ⍝ Perform the conversion:
           ⍝ 1) Generate a vector of codes for each digit
-          ⍝    (by encoding 2-digit numbers to binary).
-          ⍝ 2) Encode first 6 digits using the original codes.
-          ⍝ 3) Encode last 5 digits AND the check digit using the reverse codes.
-          ⍝ 4) Return the final boolean vector.
+          ⍝    (by encoding numbers in binary).
+          ⍝ 2) Encode 11 digits and the check digit using the codes.
+          ⍝ 3) Return the final boolean vector with the right part reversed.
      codes←((7⍴2)⊤⊢)¨13 25 19 61 35 49 47 59 55 11
-     LL←∊codes[1+6↑⍵]
-     RR←∊~codes[1+(¯5↑⍵),CheckDigit ⍵]
-     1 0 1,LL,0 1 0 1 0,RR,1 0 1
+     LR←∊codes[1+⍵,CheckDigit ⍵]
+     1 0 1,(42↑LR),0 1 0 1 0,(~42↓LR),1 0 1
  }
 
  pv←{
@@ -393,14 +404,14 @@ Reaction←_
           ⍝ 2) n is even:
           ⍝       find x*n÷2 modulus n (recursively), square it,
           ⍝       find the residue modulus 1e6 and return the result.
-          ⍝ 3) n is odd and bigger than zero:
+          ⍝ 3) n is odd and bigger than one:
           ⍝       find x*((n-1)÷2) modulus n (recursively), square it, multiply by 2
           ⍝       (because the extra element can be either included or excluded),
           ⍝       find the residue modulus 1e6 and return the result.
      
           ⍝ Taking the residue ensures that we always hold the lower 6 decimal
           ⍝ digits (up to 20 bits) towards the final product 2*n.
-          ⍝ Squaring and mulitplying by 2 makes the intermediate result up to 41
+          ⍝ Squaring and multiplying by 2 makes the intermediate result up to 41
           ⍝ bits long. But this is well within the limits of 52-bit fraction part
           ⍝ of IEEE 754 64-bit floating-point format, which is used by Dyalog APL.
           ⍝ Thus we can arrive to the final answer precisely.
