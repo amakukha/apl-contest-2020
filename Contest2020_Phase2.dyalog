@@ -31,7 +31,7 @@ Reaction←_
      
           ⍝ Solution A: Dynamic programming. Time complexity: O(half×≢nums)
           ⍝ It works faster for small total sum or relatively many numbers.
-     th←550÷2*(0⌈20-≢⍵)     ⍝ empiric threshold for when A works faster than B
+     th←640÷2*(0⌈20-≢⍵)     ⍝ empiric threshold for when A works faster than B
      half<th:BalanceDynamic ⍵
      
           ⍝ Solution B: Matrix multiplication. Time complexity: O((≢nums)×2*(≢nums))
@@ -45,12 +45,12 @@ Reaction←_
           ⍝ 4) See if there is a subset which sums to the half of the total sum.
           ⍝ 5) If there is no such subset, then return ⍬.
           ⍝ 6) Otherwise split the numbers into two groups and return them.
-          ⍝    One group represents the found subset and another – the other half of
-          ⍝    the total sum.
+          ⍝    One group represents the found subset and another – all the other
+          ⍝    numbers (including the first one).
      
      sz←¯1+≢⍵                               ⍝ vector size (≤19)
      bin←(sz⍴2)⊤⊢                           ⍝ function to convert to binary vec
-     sol←((1↓⍵)+.×(bin ¯1+⍳2*sz))⍳half      ⍝ find a solution
+     sol←((1↓⍵)+.×(bin ¯1+⍳2*sz))⍳half      ⍝ find a solution index (steps 2–4)
      sol>2*sz:⍬                             ⍝ return ⍬ if there is no solution
      mask←0,bin ¯1+sol                      ⍝ prepare a mask for the solution
      (mask/⍵)((~mask)/⍵)                    ⍝ split nums according to mask
@@ -68,16 +68,17 @@ Reaction←_
           ⍝ be constructed using a subset of first few numbers.
           ⍝ First index is sum + 1.
           ⍝ Second index is the number of first nums considered + 1.
-     M←(1(1+≢⍵))⍴1      ⍝ zero sum is always possible
+     M←(1(1+≢⍵))⍴1      ⍝ first row: sum zero is always possible
      
           ⍝ Calculate the matrix values row by row:
           ⍝ for each sum from 1 to half consider ≢nums subsets.
           ⍝ Outer dfn takes nums  on the left, sum+1 on the right.
-          ⍝ Inner dfn takes sum+1 on the left, a subset of nums on the right.
+          ⍝ Inner dfn takes a num on the left, its index on the right.
           ⍝ Scan operator with logical OR ∨\ is used to propagate a solution to the
-          ⍝ right. Because a solution for a subset also works for bigger subsets.
+          ⍝ right in a newly constructed row, because a solution for a subset also
+          ⍝ works for bigger subsets. A newly calculated row is then catenated to M.
      ign←(⊂⍵){
-         ⊢M⍪←(0,∨\⍵{⍺≤⊃⌽⍵:0 ⋄ M[⍺-⊃⌽⍵;≢⍵]}¨,\⍺)
+         s←⍵ ⋄ ⊢M⍪←(0,∨\⍺{s≤⍺:0 ⋄ M[s-⍺;⍵]}¨⍳≢⍺)
      }¨1+⍳half
      
           ⍝ If the sum `half` cannot be constructed return ⍬
