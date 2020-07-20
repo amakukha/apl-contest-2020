@@ -102,9 +102,8 @@ Reaction←_
           ⍝ Problem 7, Tasl 1 - CheckDigit
      
           ⍝ Directly derived from check digit definition:
-          ⍝ 1) Multiply the first 11 digits by (3, 1, ..., 3) elementwise
-          ⍝ 2) Find the sum and negate it
-          ⍝ 3) Find the residue modulus 10 – this is the check digit
+          ⍝ 1) Find dot product of the first 11 digits and the vector 3 1 3 ... 1 3.
+          ⍝ 2) Negate it and find the residue modulus 10 – this is the check digit.
      
      10|-(11⍴3 1)+.×11↑⍵
  }
@@ -264,16 +263,15 @@ Reaction←_
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 9, Task 1 - Weights
      
-          ⍝ 1) Read the mobile from file as a vector of lines.
-          ⍝ 2) Remove lines which exactly repeat the previous lines and contain only
-          ⍝    vertical bars (│). Such lines don't bring any useful information.
-          ⍝    (This filtering step allows to process files which are very deep
-          ⍝    without running out of memory. For example, 10K characters wide, 100K
-          ⍝    lines deep. Without filtering, such a file would be represented by a
-          ⍝    matrix with 1 billion characters!)
-          ⍝ 3) Format the rest of the lines into a text matrix (2D).
-     M←⊃(⎕NGET ⍵ 1)[1]
-     q←((∨/(~⍤∊∘'│ '))¨M)∨1,2≢/M
+          ⍝ 1) Read the mobile from file as a vector of lines (M).
+          ⍝ 2) Find lines which exactly repeat the preceding lines and contain only
+          ⍝    vertical bars (│) and spaces. Such lines don't bring any useful
+          ⍝    information. (This filtering step allows to process files which are
+          ⍝    very deep without running out of memory. For example, 10K characters
+          ⍝    wide, 100K lines deep. Without filtering, such a file would be
+          ⍝    represented by a matrix with 1 billion characters!)
+          ⍝ 3) Remove such lines and format the rest of lines into a text matrix.
+     q←((∨/(~⍤∊∘'│ '))¨M)∨1,2≢/M←⊃(⎕NGET ⍵ 1)[1]
      M←⍕↑q/M
      
           ⍝ Find the distinct weight names to know how many variable are there.
@@ -312,9 +310,11 @@ Reaction←_
      
      ign←1 descent x        ⍝ parse the input to find the matrix C
      
-     W←(⌹C)[;1]     ⍝ multiplying the inverse of C by 1 0 ... 0 is first column
-     ,(∨/W)÷⍨W      ⍝ divide the solution by generalized GCD to obtain an
-                         ⍝ integer solution
+          ⍝ 1) Obtain a solution by multiplying the inverse of C by vector 1 0 ... 0
+          ⍝    (equivalent to just taking the first column of the inverse).
+          ⍝ 2) Divide the solution vector by generalized GCD of the values to get an
+          ⍝    integer solution.
+     ,W÷∨/W←(⌹C)[;1]
  }
 
  WriteUPC←{
