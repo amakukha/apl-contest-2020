@@ -1,16 +1,12 @@
 ﻿:Namespace Contest2020
 ⍝ === VARIABLES ===
 
-L←⎕av[3+⎕io]
-AboutMe←L,''
+AboutMe←''
 
 FilePath←'/tmp/'
 
-_←⍬
-_,←L,''
-Reaction←_
+Reaction←''
 
-⎕ex¨ 'L' '_'
 
 ⍝ === End of variables definition ===
 
@@ -276,10 +272,10 @@ Reaction←_
           ⍝    represented by a matrix with 1 billion characters!)
           ⍝ 2) Remove such lines and format the rest of the lines into a character
           ⍝    matrix (2D).
-     q←((∨/(~⍤∊∘'│ '))¨M)∨1,2≢/M←⊃⎕NGET ⍵ 1
+     q←~((∧/∊∘'│ ')¨M)∧0,2≡/M←⊃⎕NGET ⍵ 1
      M←⍕↑q/M
      
-          ⍝ Find the distinct weight names to know how many variable are there.
+          ⍝ Find the distinct weight names to know how many variables are there.
           ⍝ Assumption: all characters other than " ┌─┴┐│" and newline are weights.
      N←∪' ┌─┴┐│'~⍨∊M
      
@@ -299,12 +295,11 @@ Reaction←_
      
           ⍝ Parses a lever and adds the resulting relations between weights into C
      explore←{                      ⍝ this function parses input horizontally
-         r←'─'≠M[⍺;]                ⍝ find all non-horizontal bars in this row
-         x1←⌈/⍸(¯1+⍵)↑r             ⍝ find first non-'─' on the left
-         x2←⍵+⌊/⍸⍵↓r                ⍝ find first non-'─' on the right
-         w1←(⍺+1)descent x1         ⍝ parse left sub-mobile
-         w2←(⍺+1)descent x2         ⍝ parse right sub-mobile
-         cfs←((⍵-x1)×w1)-(x2-⍵)×w2  ⍝ relationship between weights here (coefs)
+         d←(∊∘'┐┌')M[⍺;]            ⍝ find all lever edges in the current row
+         l r←(⍳∘1)¨(⌽(⍵-1)↑d)(⍵↓d)  ⍝ offsets of the left and right edges
+         w1←(⍺+1)descent ⍵-l        ⍝ parse left sub-mobile
+         w2←(⍺+1)descent ⍵+r        ⍝ parse right sub-mobile
+         cfs←(l×w1)-r×w2            ⍝ relationship between weights here (coefs)
          C⍪←cfs÷∨/cfs               ⍝ divide these coefs by GCD and add to C
          w1+w2                      ⍝ return all the weights of this sub-mobile
      }
