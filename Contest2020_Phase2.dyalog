@@ -164,23 +164,19 @@ Reaction←_
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 3, Task 1 - PastTasks
      
-          ⍝ GET the web page via HTTP
+          ⍝ 1) GET the web page via HTTP.
+          ⍝ 2) Parse XML into a matrix.
+          ⍝ 3) Find all <A> tags and obtain their attributes.
+          ⍝ 4) Find all "href" attributes and obtain their values.
+          ⍝ 5) Filter urls with PDF extension (case-insensitive).
+          ⍝ 6) Parse the domain and schema from the original URL.
+          ⍝ 7) Add the domain and schema to the obtained URLs (if necessary).
+     
      res←HttpCommand.Get ⍵
-     
-          ⍝ Parse XML
      parsed←⎕XML res.Data
-     
-          ⍝ Find all <A> tags and obtain their attributes
-     attrs←⊃⍪/parsed[⍸({(∊⍵[2])≡,'a'}⍤1)parsed;4]
-     
-          ⍝ Find all "href" attributes and obtain their values
+     attrs←⊃⍪/parsed[⍸({⍵[2]≡⊂,'a'}⍤1)parsed;4]
      uris←attrs[⍸({⍵[1]≡⊂'href'}⍤1)attrs;2]
-     
-          ⍝ Filter urls with PDF extension (case-insensitive)
      pdfs←,uris[⍸{⍴('pdf$'⎕S 0⍠1)⍵:1 ⋄ 0}¨uris]
-     
-          ⍝ 1) Parse the domain and schema from the original URL.
-          ⍝ 2) Add the domain and schema to the obtained URLs (if necessary).
      domain←{1=⍴⍵:⊃⍵ ⋄ 'https://www.dyalog.com/'}('^([^/]*//[^/]+/)'⎕S'\1')⍵
      {'http'≢4↑⎕C∊⍵:(domain,⍵) ⋄ ⍵}¨pdfs
  }
@@ -263,15 +259,16 @@ Reaction←_
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 9, Task 1 - Weights
      
-          ⍝ 1) Read the mobile from file as a vector of lines (M).
-          ⍝ 2) Find lines which exactly repeat the preceding lines and contain only
+          ⍝ 1) Read the diagram of a mobile from the file as a vector of lines (M).
+          ⍝    Find lines which exactly repeat the preceding lines and contain only
           ⍝    vertical bars (│) and spaces. Such lines don't bring any useful
           ⍝    information. (This filtering step allows to process files which are
           ⍝    very deep without running out of memory. For example, 10K characters
           ⍝    wide, 100K lines deep. Without filtering, such a file would be
           ⍝    represented by a matrix with 1 billion characters!)
-          ⍝ 3) Remove such lines and format the rest of lines into a text matrix.
-     q←((∨/(~⍤∊∘'│ '))¨M)∨1,2≢/M←⊃(⎕NGET ⍵ 1)[1]
+          ⍝ 2) Remove such lines and format the rest of the lines into a character
+          ⍝    matrix (2D).
+     q←((∨/(~⍤∊∘'│ '))¨M)∨1,2≢/M←⊃⎕NGET ⍵ 1
      M←⍕↑q/M
      
           ⍝ Find the distinct weight names to know how many variable are there.
@@ -312,8 +309,8 @@ Reaction←_
      
           ⍝ 1) Obtain a solution by multiplying the inverse of C by vector 1 0 ... 0
           ⍝    (equivalent to just taking the first column of the inverse).
-          ⍝ 2) Divide the solution vector by generalized GCD of the values to get an
-          ⍝    integer solution.
+          ⍝ 2) Divide the solution vector by generalized GCD of its values to get
+          ⍝    the smallest integer solution.
      ,W÷∨/W←(⌹C)[;1]
  }
 
