@@ -166,19 +166,27 @@ Reaction←_
      
           ⍝ 1) GET the web page via HTTP.
           ⍝ 2) Parse XML into a matrix.
-          ⍝ 3) Find all <A> tags and obtain their attributes.
-          ⍝ 4) Find all "href" attributes and obtain their values.
-          ⍝ 5) Filter urls with PDF extension (case-insensitive).
-          ⍝ 6) Parse the domain and schema from the original URL.
-          ⍝ 7) Add the domain and schema to the obtained URLs (if necessary).
-     
      res←HttpCommand.Get ⍵
-     parsed←⎕XML res.Data
-     attrs←⊃⍪/parsed[⍸({⍵[2]≡⊂,'a'}⍤1)parsed;4]
-     uris←attrs[⍸({⍵[1]≡⊂'href'}⍤1)attrs;2]
-     pdfs←,uris[⍸{⍴('pdf$'⎕S 0⍠1)⍵:1 ⋄ 0}¨uris]
-     domain←{1=⍴⍵:⊃⍵ ⋄ 'https://www.dyalog.com/'}('^([^/]*//[^/]+/)'⎕S'\1')⍵
-     {'http'≢4↑⎕C∊⍵:(domain,⍵) ⋄ ⍵}¨pdfs
+     dat←⎕XML res.Data
+     
+          ⍝ Helper function which finds all "href" attribute values by tag name.
+     getUris←{
+              ⍝ 1) Find all elements by tag name and obtain their attributes.
+              ⍝ 2) Check if result was not empty.
+              ⍝ 3) Find all "href" attributes and return their values.
+         attrs←⊃⍪/dat[⍸((⊂,⍵)∘{⍵[2]≡⍺}⍤1)dat;4]
+         0=≢attrs:⍬     ⍝ sanity check
+         attrs[⍸({⍵[1]≡⊂'href'}⍤1)attrs;2]
+     }
+     
+          ⍝ 1) Retrieve all URLs from "A" tags. Return ⍬ is nothing was found.
+          ⍝ 2) Filter urls with PDF file name extension (case-insensitive).
+          ⍝ 3) Get the address from the "base" tag.
+          ⍝ 4) Add the base address to the obtained relative URLs.
+     0=≢uris←getUris'a':⍬
+     pdfs←{({⊃⍴('\.pdf$'⎕S 0⍠1)⍵}¨⍵)/⍵}uris
+     base←{0≠≢⍵:⊃⍵ ⋄ ''}getUris'base'
+     (base,⊢)¨pdfs
  }
 
  ReadUPC←{
