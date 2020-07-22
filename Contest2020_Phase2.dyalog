@@ -153,7 +153,7 @@ Reaction←''
           ⍝ 1) Partition the template.
           ⍝ 2) Replace all the merge areas.
           ⍝ 3) Concatenate the resulting strings.
-     ,/replace¨(parts⊆template)
+     ,/replace¨parts⊆template
  }
 
  PastTasks←{
@@ -300,7 +300,7 @@ Reaction←''
          w1←(⍺+1)descent ⍵-l        ⍝ parse left sub-mobile
          w2←(⍺+1)descent ⍵+r        ⍝ parse right sub-mobile
          cfs←(l×w1)-r×w2            ⍝ relationship between weights here (coefs)
-         C⍪←cfs÷∨/cfs               ⍝ divide these coefs by GCD and add to C
+         C⍪←cfs÷∨/cfs               ⍝ divide the coefs by GCD and catenate to C
          w1+w2                      ⍝ return all the weights of this sub-mobile
      }
      
@@ -343,7 +343,7 @@ Reaction←''
      
           ⍝ 1) Find the accumulated interest rate for all future terms (×\1+⍵).
           ⍝ 2) Discount cashflow amounts by dividing them by the accumulated
-          ⍝    interest rate. This finds present value of each such amount.
+          ⍝    interest rate. This finds present values of each such amount.
           ⍝ 3) Add up all the present values of the amounts to find the total
           ⍝    present value.
      
@@ -353,6 +353,7 @@ Reaction←''
  revp←{
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 4, Task 1 - revp
+          ⍝ Rosalind: Locating Restriction Sites
      
           ⍝ If input is too small: return an empty 2-column matrix
      4>≢⍵:0 2⍴⍬
@@ -375,18 +376,24 @@ Reaction←''
           ⍝ Problem 5, Task 1 - rr
      
           ⍝ This can be calculated elegantly with the following operations:
-          ⍝ 1) Find the accumulated interest rate (IR) for each term (IR←×\1+⍵).
-          ⍝ 2) Deprecate the cashflow amounts by dividing them by accumulated IR.
+          ⍝ 1) Find the accumulated interest rate (AR) for each term (AR←×\1+⍵).
+          ⍝ 2) Deprecate the cashflow amounts by dividing them by AR.
           ⍝    This finds the present value of all the amounts.
           ⍝ 3) Accumulate all the present values of the amounts to find the total
           ⍝    present value at each term.
-          ⍝ 4) Multiply by IR to find future values at each term.
+          ⍝ 4) Multiply by AR to find future values at each term.
      
-          ⍝ This way the money that was deposited in a term is not changed,
-          ⍝ but the money that came from the previous term is multiplied by
-          ⍝ the current interest rate for each term arriving to correct answer.
+          ⍝ This way the money that was invested or withdrawn in a term is not
+          ⍝ changed for that term, but the money that came from the previous terms
+          ⍝ is multiplied by the current interest rate for each term arriving to the
+          ⍝ correct recurrent relation:
+          ⍝ Step 2) amounts[i]/AR[i]                     ⍝ ≡ PV[i]
+          ⍝ Step 3) amounts[i]/AR[i] + APV[i-1]
+          ⍝ Step 4) amounts[i] + APV[i-1]×AR[i]
+          ⍝         amounts[i] + APV[i-1]×AR[i-1]×(1+rate[i])
+          ⍝         amounts[i] + r[i-1]×(1+rate[i])      ⍝ ≡ r[i]
      
-     IR×+\⍺÷IR←×\1+⍵
+     AR×+\⍺÷AR←×\1+⍵
  }
 
  sset←{
