@@ -19,19 +19,19 @@ Reaction←''
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 8, Task 1 - Balance
      
-          ⍝ First, I find the half of the total sum.
-          ⍝ Return ⍬ if it's odd (cannot be split evenly).
+          ⍝ First, we find the half of the total sum.
+          ⍝ Return ⍬ if it's odd (cannot split in two parts with equal sums).
      half≠⌊half←2÷⍨+/⍵:⍬
      
-          ⍝ Next there are two solutions with different time complexities.
+          ⍝ Next there are two approaches with different time complexities.
      
-          ⍝ Solution A: Dynamic programming. Time complexity: O(half×≢nums)
+          ⍝ Algorithm A: Dynamic programming. Time complexity: O(half×≢nums)
           ⍝ It works faster for small total sum or relatively many numbers.
      th←640÷2*(0⌈20-≢⍵)     ⍝ empiric threshold for when A works faster than B
-     half<th:BalanceDynamic ⍵
+     half<th:half BalanceDynamic ⍵
      
-          ⍝ Solution B: Matrix multiplication. Time complexity: O((≢nums)×2*(≢nums))
-          ⍝ This solution finds all possible solutions at once.
+          ⍝ Algorithm B: Matrix multiplication. Time complexity: O((≢nums)×2*(≢nums))
+          ⍝ This approach finds all possible solutions at once.
           ⍝ Steps:
           ⍝ 1) Assume that the first number will go to the second part.
           ⍝    This breaks symmetry and reduces the search space by half.
@@ -39,7 +39,7 @@ Reaction←''
           ⍝    For this, generate matrix of all boolean vectors of size (¯1+≢⍵).
           ⍝ 3) Multiply this matrix by nums to get the sums of each possible subset.
           ⍝ 4) See if there is a subset which sums to the half of the total sum.
-          ⍝ 5) If there is no such subset, then return ⍬.
+          ⍝ 5) If there is no such subset return ⍬.
           ⍝ 6) Otherwise split the numbers into two groups and return them.
           ⍝    One group represents the found subset and another – all the other
           ⍝    numbers (including the first one).
@@ -53,39 +53,42 @@ Reaction←''
  }
 
  BalanceDynamic←{
-          ⍝ Dynamic programming solution of the balance weights problem.
+          ⍝ Dynamic programming approach for the Balancing the Scales problem.
           ⍝ Works faster than matrix multiplication approach for small total sums.
      
-          ⍝ Find the half of the total sum (again).
-          ⍝ Return ⍬ if it's odd (cannot be split evenly).
-     half≠⌊half←2÷⍨+/⍵:⍬
+          ⍝ 1) Find the half of the total sum (if it's not provided by the caller).
+          ⍝ 2) Return ⍬ if it's odd (cannot split in two parts with equal sums).
+     ⍺←2÷⍨+/⍵ ⋄ ⍺≠⌊⍺:⍬
      
-          ⍝ Initialize matrix which shows if a given sum can
-          ⍝ be constructed using a subset of first few numbers.
-          ⍝ First index is sum + 1.
-          ⍝ Second index is the number of first nums considered + 1.
-     M←(1(1+≢⍵))⍴1      ⍝ first row: sum zero is always possible
+          ⍝ Initialize matrix M which shows if a given sum can be constructed using
+          ⍝ a subset of first few numbers. Only first row is known at this point.
+          ⍝ First index (row) is sum + 1.
+          ⍝ Second index (column) is the number of first nums considered + 1.
+     M←(1(1+≢⍵))⍴1      ⍝ first row: all 1s, since sum 0 is always possible
      
           ⍝ Calculate the matrix values row by row:
           ⍝ for each sum from 1 to half consider ≢nums subsets.
           ⍝ Outer dfn takes nums  on the left, sum+1 on the right.
           ⍝ Inner dfn takes a num on the left, its index on the right.
-          ⍝ Scan operator with logical OR ∨\ is used to propagate a solution to the
-          ⍝ right in a newly constructed row, because a solution for a subset also
-          ⍝ works for bigger subsets. A newly calculated row is then catenated to M.
+          ⍝ It also uses outer dfn's variable s (s=sum+1). Inner dfn returns a
+          ⍝ row for the matrix M by considering only if the current sum can be
+          ⍝ constructed by inclusion of the respective number. Scan operator with
+          ⍝ logical OR (∨\) is then used to propagate a solution to the right
+          ⍝ in the newly constructed row (because a solution for a subset also
+          ⍝ works for bigger subsets). The final row is then catenated to M.
      ign←(⊂⍵){
          s←⍵ ⋄ ⊢M⍪←(0,∨\⍺{s≤⍺:0 ⋄ M[s-⍺;⍵]}¨⍳≢⍺)
-     }¨1+⍳half
+     }¨1+⍳⍺
      
-          ⍝ If the sum `half` cannot be constructed return ⍬
-     ~M[1+half;1+≢⍵]:⍬
+          ⍝ Return ⍬ if the half of the total sum (⍺) cannot be constructed.
+     ~M[1+⍺;1+≢⍵]:⍬
      
-          ⍝ Extract a concrete solution from the matrix by
-          ⍝ backtracking from the target sum to zero recursively.
+          ⍝ Otherwise: extract a concrete solution from the matrix
+          ⍝ by backtracking from the target sum to zero recursively.
           ⍝ Construct the boolean vector "mask" as the result.
           ⍝ This dfn takes sum+1 on the left and subset of nums on the right.
           ⍝ It considers if the rightmost number should be included into the mask.
-     mask←(half+1){
+     mask←(⍺+1){
          0=≢⍵:⍬                     ⍝ all numbers were considered
          M[⍺;≢⍵]∨⍺=1:(⍺ ∇ ¯1↓⍵),0   ⍝ no need to include the rightmost number
          ((⍺-⊃¯1↑⍵)∇ ¯1↓⍵),1        ⍝ otherwise: include the rightmost number
@@ -264,14 +267,14 @@ Reaction←''
           ⍝ Problem 9, Task 1 - Weights
      
           ⍝ 1) Read the diagram of a mobile from the file as a vector of lines (M).
-          ⍝    Find lines which exactly repeat the preceding lines and contain only
+          ⍝ 2) Find lines which exactly repeat the preceding lines and contain only
           ⍝    vertical bars (│) and spaces. Such lines don't bring any useful
           ⍝    information. (This filtering step allows to process files which are
           ⍝    very deep without running out of memory. For example, 10K characters
           ⍝    wide, 100K lines deep. Without filtering, such a file would be
           ⍝    represented by a matrix with 1 billion characters!)
-          ⍝ 2) Remove such lines and format the rest of the lines into a character
-          ⍝    matrix (2D).
+          ⍝ 3) Remove the repeating lines and format the rest of the lines into a
+          ⍝    character matrix (2D).
      q←~((∧/∊∘'│ ')¨M)∧0,2≡/M←⊃⎕NGET ⍵ 1
      M←⍕↑q/M
      
@@ -282,7 +285,8 @@ Reaction←''
           ⍝ Coefficients matrix: specifies the relationships between weights.
           ⍝ It is such a matrix that satisfies (C+.×W)≡(1,(¯1+≢N)⍴0),
           ⍝ where W is the solution vector (numeric values of weights).
-     C←(1@1)(1(≢N))⍴0    ⍝ first weight is assumed to be 1 (for now)
+          ⍝ We have only one row at this point: to set the first weight as the unit.
+     C←(1@1)(1(≢N))⍴0    ⍝ the first weight is provisionally set to be 1
      
           ⍝ Define recursive function for parsing.
           ⍝ Returns a boolean vector for weights found in the sub-mobile (sub-tree)
