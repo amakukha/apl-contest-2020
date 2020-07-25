@@ -19,19 +19,24 @@ Reaction←''
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 8, Task 1 - Balance
      
-          ⍝ First, we find the half of the total sum.
-          ⍝ Return ⍬ if it's odd (cannot split in two parts with equal sums).
-     half≠⌊half←2÷⍨+/⍵:⍬
+          ⍝ 1) Find GCD of the numbers and divide them by the GCD.
+          ⍝    (Allows to check for odd total even if all the numbers are even.
+          ⍝    It also reduces the magnitude of the numbers speeding up the search.)
+          ⍝ 2) Find the half of the total sum of these reduced numbers.
+          ⍝ 3) Return ⍬ if it's odd (cannot split in two parts with equal sums).
+     nums←⍵÷gcd←∨/⍵
+     half≠⌊half←2÷⍨+/nums:⍬
      
           ⍝ Next there are two approaches with different time complexities.
      
-          ⍝ Algorithm A: Dynamic programming. Time complexity: O(half×≢nums)
-          ⍝ It works faster for small total sum or relatively many numbers.
-     th←640÷2*(0⌈20-≢⍵)     ⍝ empiric threshold for when A works faster than B
-     half<th:half BalanceDynamic ⍵
+          ⍝ Algorithm A: Recursive search (with greedy optimization).
+          ⍝ It works faster when the numbers are smaller or there are more numbers.
+     th←29500÷2*(0⌈20-≢⍵)   ⍝ empiric threshold for when A works faster than B
+     half<th:(gcd×⊢)BalanceRecursive nums
      
-          ⍝ Algorithm B: Matrix multiplication. Time complexity: O((≢nums)×2*(≢nums))
-          ⍝ This approach finds all possible solutions at once.
+          ⍝ Algorithm B: Matrix multiplication. Time complexity: O((≢nums)×2*≢nums).
+          ⍝ The running time doesn't depend on the magnitude of the numbers.
+          ⍝ This approach also finds all possible solutions at once.
           ⍝ Steps:
           ⍝ 1) Assume that the first number will go to the second part.
           ⍝    This breaks symmetry and reduces the search space by half.
@@ -46,54 +51,36 @@ Reaction←''
      
      sz←¯1+≢⍵                               ⍝ vector size (≤19)
      bin←(sz⍴2)⊤⊢                           ⍝ function to convert to binary vec
-     sol←((1↓⍵)+.×(bin ¯1+⍳2*sz))⍳half      ⍝ find a solution index (steps 2–4)
+     sol←((1↓nums)+.×(bin ¯1+⍳2*sz))⍳half   ⍝ find a solution index (steps 2–4)
      sol>2*sz:⍬                             ⍝ return ⍬ if there is no solution
      mask←0,bin ¯1+sol                      ⍝ prepare a mask for the solution
      (mask/⍵)((~mask)/⍵)                    ⍝ split nums according to mask
  }
 
- BalanceDynamic←{
-          ⍝ Dynamic programming approach for the Balancing the Scales problem.
-          ⍝ Works faster than matrix multiplication approach for small total sums.
-     
+ BalanceRecursive←{
           ⍝ 1) Find the half of the total sum (if it's not provided by the caller).
           ⍝ 2) Return ⍬ if it's odd (cannot split in two parts with equal sums).
-     ⍺←2÷⍨+/⍵ ⋄ ⍺≠⌊⍺:⍬
+     ⍺←2÷⍨+/⍵ ⋄ ⍺≠⌊half←⍺:⍬
      
-          ⍝ Initialize matrix M which shows if a given sum can be constructed using
-          ⍝ a subset of first few numbers. Only first row is known at this point.
-          ⍝ First index (row) is sum + 1.
-          ⍝ Second index (column) is the number of first nums considered + 1.
-     M←(1(1+≢⍵))⍴1      ⍝ first row: all 1s, since sum 0 is always possible
+          ⍝ Sort the numbers in descending order making the search "greedy".
+     nums←⍵[⍒⍵]
      
-          ⍝ Calculate the matrix values row by row:
-          ⍝ for each sum from 1 to half consider ≢nums subsets.
-          ⍝ Outer dfn takes nums  on the left, sum+1 on the right.
-          ⍝ Inner dfn takes a num on the left, its index on the right.
-          ⍝ It also uses outer dfn's variable s (s=sum+1). Inner dfn returns a
-          ⍝ row for the matrix M by considering only if the current sum can be
-          ⍝ constructed by inclusion of the respective number. Scan operator with
-          ⍝ logical OR (∨\) is then used to propagate a solution to the right
-          ⍝ in the newly constructed row (because a solution for a subset also
-          ⍝ works for bigger subsets). The final row is then catenated to M.
-     ign←(⊂⍵){
-         s←⍵ ⋄ ⊢M⍪←(0,∨\⍺{s≤⍺:0 ⋄ M[s-⍺;⍵]}¨⍳≢⍺)
-     }¨1+⍳⍺
+          ⍝ Recursive search helper.
+          ⍝ Takes current weight on the left, current mask on the right.
+          ⍝ Returns the mask for a solution; otherwise ⍬.
+     rec←{
+         ⍺=half:⍵                   ⍝ arrived to a solution: return it
+         (⍺>half)∨(≢nums)=≢⍵:⍬      ⍝ bounding or end of search: return ⍬
+         r←(⍺+nums[1+≢⍵])∇ ⍵,1      ⍝ try to include the current number
+         ⍬≢r:r                      ⍝ solution found: return it
+         ⍺ ∇ ⍵,0                    ⍝ try to exclude the current number
+     }
      
-          ⍝ Return ⍬ if the half of the total sum (⍺) cannot be constructed.
-     ~M[1+⍺;1+≢⍵]:⍬
-     
-          ⍝ Otherwise: extract a concrete solution from the matrix
-          ⍝ by backtracking from the target sum to zero recursively.
-          ⍝ Construct the boolean vector "mask" as the result.
-          ⍝ This dfn takes sum+1 on the left and subset of nums on the right.
-          ⍝ It considers if the rightmost number should be included into the mask.
-     mask←(⍺+1){
-         0=≢⍵:⍬                     ⍝ all numbers were considered
-         M[⍺;≢⍵]∨⍺=1:(⍺ ∇ ¯1↓⍵),0   ⍝ no need to include the rightmost number
-         ((⍺-⊃¯1↑⍵)∇ ¯1↓⍵),1        ⍝ otherwise: include the rightmost number
-     }⍵
-     (mask/⍵)((~mask)/⍵)
+          ⍝ Start the recursive search including the first number at once
+          ⍝ (this is to break symmetry and reduce the search space).
+     ⍬≡mask←(⊃nums)rec,1:⍬          ⍝ find a solution; return ⍬ if not found
+     mask←(≢nums)↑mask              ⍝ pad the mask with zeroes if needed
+     (mask/nums)((~mask)/nums)      ⍝ split numbers according to mask
  }
 
  CheckDigit←{
