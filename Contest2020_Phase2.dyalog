@@ -31,11 +31,11 @@ Reaction←''
      
           ⍝ Algorithm A: Recursive search (with greedy optimization).
           ⍝ It works faster when the numbers are smaller or there are more numbers.
-     th←29500÷2*(0⌈20-≢⍵)   ⍝ empiric threshold for when A works faster than B
+     th←64000÷2*(0⌈20-≢⍵)   ⍝ empiric threshold for when A works faster than B
      half<th:(gcd×⊢)BalanceRecursive nums
      
           ⍝ Algorithm B: Matrix multiplication. Time complexity: O((≢nums)×2*≢nums).
-          ⍝ The running time doesn't depend on the magnitude of the numbers.
+          ⍝ The running time doesn't depend on the magnitude of the numbers as much.
           ⍝ This approach also finds all possible solutions at once.
           ⍝ Steps:
           ⍝ 1) Assume that the first number will go to the second part.
@@ -58,19 +58,24 @@ Reaction←''
  }
 
  BalanceRecursive←{
+          ⍝ Branch and bound approach for the Balancing the Scales problem.
+          ⍝ Works faster than matrix multiplication approach for small total sums.
+     
           ⍝ 1) Find the half of the total sum (if it's not provided by the caller).
           ⍝ 2) Return ⍬ if it's odd (cannot split in two parts with equal sums).
      ⍺←2÷⍨+/⍵ ⋄ ⍺≠⌊half←⍺:⍬
      
-          ⍝ Sort the numbers in descending order making the search "greedy".
-     nums←⍵[⍒⍵]
+          ⍝ 1) Sort the numbers in descending order making the search "greedy".
+          ⍝ 2) Calculate sums of all remaining values for each stage of search.
+     rem←1↓⌽+\⌽nums←⍵[⍒⍵]
      
           ⍝ Recursive search helper.
-          ⍝ Takes current weight on the left, current mask on the right.
+          ⍝ Takes current sum on the left, current mask on the right.
           ⍝ Returns the mask for a solution; otherwise ⍬.
      rec←{
          ⍺=half:⍵                   ⍝ arrived to a solution: return it
-         (⍺>half)∨(≢nums)=≢⍵:⍬      ⍝ bounding or end of search: return ⍬
+         (half<⍺)∨(≢nums)=≢⍵:⍬      ⍝ cap bounding or end of search: return ⍬
+         half>⍺+rem[≢⍵]:⍬           ⍝ cup bounding (sum is too small): return ⍬
          r←(⍺+nums[1+≢⍵])∇ ⍵,1      ⍝ try to include the current number
          ⍬≢r:r                      ⍝ solution found: return it
          ⍺ ∇ ⍵,0                    ⍝ try to exclude the current number
