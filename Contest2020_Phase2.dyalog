@@ -19,43 +19,51 @@ Reaction←''
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 8, Task 1 - Balance
      
-          ⍝ 1) Find GCD of the numbers and divide them by the GCD.
-          ⍝    (Allows to perform the quick "odd total" check in more cases.
-          ⍝    It also reduces the magnitude of the numbers speeding up the search.)
-          ⍝ 2) Find the half of the total sum of these reduced numbers.
-          ⍝ 3) "Odd total" check: return ⍬ if the half is not integer.
+          ⍝ 1) Find GCD of the numbers (∨/⍵). If it's 0, make it 1 (avoid ÷0).
+          ⍝ 2) Negate GCD if all the numbers are non-positive (allows to use
+          ⍝    the recursive approach later).
+          ⍝ 3) Divide numbers by the obtained GCD. (Allows to perform the quick
+          ⍝    "odd total" check in more cases. It also reduces the magnitude of
+          ⍝    the numbers speeding up the recursive approach.)
+          ⍝ 4) Find the half of the total sum of these reduced numbers.
+          ⍝ 5) "Odd total" check: return ⍬ if the half is not integer.
           ⍝    (Cannot split the numbers in two parts with equal sums.)
-     nums←⍵÷gcd←∨/⍵
+     nums←⍵÷gcd←{(-⍣(∧/0∘≥⍵))1⌈∨/⍵}⍵
      half≠⌊half←2÷⍨+/nums:⍬
      
           ⍝ Next there are two approaches with different time complexities.
      
           ⍝ Algorithm A: Recursive search (with greedy optimization).
-          ⍝ It works faster when the numbers are smaller or there are more numbers.
+          ⍝ This approach only works for non-negative numbers.
+          ⍝ Otherwise, it performs better than Algorithm B when the
+          ⍝ numbers are smaller or there are more numbers.
      th←64000÷2*(0⌈20-≢⍵)   ⍝ empiric threshold for when A works faster than B
-     half<th:(gcd×⊢)BalanceRecursive nums
+     (half<th)∧(∧/0∘≤)nums:(gcd×⊢)BalanceRecursive nums
      
           ⍝ Algorithm B: Matrix multiplication. Time complexity: O((≢nums)×2*≢nums).
           ⍝ The running time doesn't depend on the magnitude of the numbers as much.
           ⍝ This approach also finds all possible solutions at once.
           ⍝ Steps:
-          ⍝ 1) Assume that the first number will go to the second part.
+          ⍝ 1) Assume that the first number will go to the first part.
           ⍝    This breaks symmetry and reduces the search space by half.
+          ⍝    It also ensures that each part has at least one element
+          ⍝    (even when the input consists entirely of zeroes).
           ⍝ 2) Consider all possible combinations for the remaining numbers.
-          ⍝    For this, generate matrix of all boolean vectors of size (¯1+≢⍵).
+          ⍝    For this, generate matrix G of all boolean vectors of size ¯1+≢⍵.
           ⍝ 3) Multiply this matrix by nums to get the sums of each possible subset.
-          ⍝ 4) See if there is a subset which sums to the half of the total sum.
+          ⍝ 4) See if there is a subset which sums to the half of the total sum less
+          ⍝    the first number.
           ⍝ 5) If there is no such subset return ⍬.
           ⍝ 6) Otherwise split the numbers into two groups and return them.
-          ⍝    One group represents the found subset and another – all the other
-          ⍝    numbers (including the first one).
+          ⍝    One group represents the found subset (together with the first
+          ⍝    number) and another – all the other numbers.
      
      sz←¯1+≢⍵                               ⍝ vector size (≤19)
      bin←(sz⍴2)⊤⊢                           ⍝ function to convert to binary vec
-     sol←((1↓nums)+.×(bin ¯1+⍳2*sz))⍳half   ⍝ find a solution index (steps 2–4)
-     sol>2*sz:⍬                             ⍝ return ⍬ if there is no solution
-     mask←0,bin ¯1+sol                      ⍝ prepare a mask for the solution
-     (mask/⍵)((~mask)/⍵)                    ⍝ split nums according to mask
+     G←bin ¯1+⍳2*sz                         ⍝ generate all the boolean vectors
+     si←((1↓nums)+.×G)⍳half-⊃nums           ⍝ find a solution index (steps 3-4)
+     si>2*sz:⍬                              ⍝ return ⍬ if there is no solution
+     (mask/⍵)((~mask←1,bin ¯1+si)/⍵)        ⍝ split nums as indicated by index
  }
 
  BalanceRecursive←{
