@@ -20,10 +20,11 @@ Reaction←''
           ⍝ Problem 8, Task 1 - Balance
      
           ⍝ 1) Find GCD of the numbers and divide them by the GCD.
-          ⍝    (Allows to check for odd total even if all the numbers are even.
+          ⍝    (Allows to perform the quick "odd total" check in more cases.
           ⍝    It also reduces the magnitude of the numbers speeding up the search.)
           ⍝ 2) Find the half of the total sum of these reduced numbers.
-          ⍝ 3) Return ⍬ if it's odd (cannot split in two parts with equal sums).
+          ⍝ 3) "Odd total" check: return ⍬ if the half is not integer.
+          ⍝    (Cannot split the numbers in two parts with equal sums.)
      nums←⍵÷gcd←∨/⍵
      half≠⌊half←2÷⍨+/nums:⍬
      
@@ -65,7 +66,7 @@ Reaction←''
           ⍝ 2) Return ⍬ if it's odd (cannot split in two parts with equal sums).
      ⍺←2÷⍨+/⍵ ⋄ ⍺≠⌊half←⍺:⍬
      
-          ⍝ 1) Sort the numbers in descending order making the search "greedy".
+          ⍝ 1) Sort the numbers in descending order (for the "greedy" heuristic).
           ⍝ 2) Calculate sums of all remaining values for each stage of search.
      rem←1↓⌽+\⌽nums←⍵[⍒⍵]
      
