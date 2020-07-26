@@ -31,18 +31,24 @@ Reaction←''
      nums←⍵÷gcd←{(-⍣(∧/0∘≥⍵))1⌈∨/⍵}⍵
      half≠⌊half←2÷⍨+/nums:⍬
      
-          ⍝ Next there are two approaches with different time complexities.
+          ⍝ Next there are three approaches with different time complexities.
      
           ⍝ Algorithm A: Recursive search (with greedy optimization).
           ⍝ This approach only works for non-negative numbers.
-          ⍝ Otherwise, it performs better than Algorithm B when the
-          ⍝ numbers are smaller or there are more numbers.
-     th←64000÷2*(0⌈20-≢⍵)   ⍝ empiric threshold for when A works faster than B
-     (half<th)∧(∧/0∘≤)nums:(gcd×⊢)BalanceRecursive nums
+          ⍝ Otherwise, it performs better than Algorithms B&C when the
+          ⍝ numbers are small.
+     th←500÷2*(0.15×0⌈20-≢⍵)    ⍝ empiric threshold for when A is the fastest
+     (15≤≢⍵)∧(half<th)∧(∧/0∘≤)nums:(gcd×⊢)BalanceRecursive nums
      
-          ⍝ Algorithm B: Matrix multiplication. Time complexity: O((≢nums)×2*≢nums).
+          ⍝ Algorithm B: Horowitz–Sahni algorithm.
           ⍝ The running time doesn't depend on the magnitude of the numbers as much.
-          ⍝ This approach also finds all possible solutions at once.
+          ⍝ The complexity is smaller than for Algorithm C,
+          ⍝ but Algorithm C still outperforms Algorithm B for fewer numbers.
+     15<≢⍵:(gcd×⊢)BalanceSplits nums
+     
+          ⍝ Algorithm C: Matrix multiplication. Time complexity: O((≢nums)×2*≢nums).
+          ⍝ The running time doesn't depend on the magnitude of the numbers as much.
+          ⍝ This approach also finds all possible solutions simultaneously.
           ⍝ Steps:
           ⍝ 1) Assume that the first number will go to the first part.
           ⍝    This breaks symmetry and reduces the search space by half.
@@ -67,8 +73,8 @@ Reaction←''
  }
 
  BalanceRecursive←{
-          ⍝ Branch and bound approach for the Balancing the Scales problem.
-          ⍝ Works faster than matrix multiplication approach for small total sums.
+          ⍝ Branch and bound approach to the Balancing the Scales problem.
+          ⍝ Works faster than matrix multiplication approaches for small total sums.
      
           ⍝ 1) Find the half of the total sum (if it's not provided by the caller).
           ⍝ 2) Return ⍬ if it's odd (cannot split in two parts with equal sums).
@@ -95,6 +101,67 @@ Reaction←''
      ⍬≡mask←(⊃nums)rec,1:⍬          ⍝ find a solution; return ⍬ if not found
      mask←(≢nums)↑mask              ⍝ pad the mask with zeroes if needed
      (mask/nums)((~mask)/nums)      ⍝ split numbers according to mask
+ }
+
+ BalanceSplits←{
+          ⍝ Another approach to the Balancing the Scales problem.
+          ⍝ Inspired by the Horowitz–Sahni algorithm for the subset sum problem.
+     
+          ⍝ It's similar to the "brute force" approach (Algorithm C),
+          ⍝ but it arbitrarily splits the set of numbers into two subsets
+          ⍝ and considers sums of all the subsets of these two subsets.
+          ⍝ By sorting such possible sums and matching the elements of the
+          ⍝ two lists to find the two sums that add up to the half of the
+          ⍝ total sum it achieves signifficant asymptotic speed up.
+          ⍝ (Algorithm C still works faster when there are fewer numbers.)
+     
+          ⍝ 1) Find the half of the total sum (if it's not provided by the caller).
+          ⍝ 2) Return ⍬ if it's odd (cannot split in two parts with equal sums).
+     ⍺←2÷⍨+/⍵ ⋄ ⍺≠⌊half←⍺:⍬
+     
+          ⍝ Split the numbers into two sets of roughly equal size.
+     h1←⌊2÷⍨s←≢⍵
+     h2←s-h1
+     mask←(1@(h1?s))s⍴0
+     s1 s2←(mask/⍵)((~mask)/⍵)
+     
+          ⍝ Generate all boolean masks for these sets
+     G1←(h1⍴2)⊤⊢¯1+⍳2*h1
+     G2←h1{⍺=⍵:G1 ⋄ (⍵⍴2)⊤⊢¯1+⍳2*⍵}h2
+     
+          ⍝ 1) Calculate sums of all the subsets of the two sets.
+          ⍝ 2) Find the sorting indices for these sums.
+     g1←⊂⍋v1←s1+.×G1
+     g2←⊂⍋v2←s2+.×G2
+     
+          ⍝ Sort the subset masks according to their sums.
+     G1s←g1⌷⍉G1
+     G2s←g2⌷⍉G2
+     
+          ⍝ Sort the sums themselves.
+     v1s←g1⌷v1
+     v2s←g2⌷v2
+     
+          ⍝ Helper function to iterate through the two sorted vectors of sums
+          ⍝ and find which two subsets add up to the half of the total sum.
+     it←{
+         (0=≢⍺)∨0=≢⍵:⍬      ⍝ reached the end unsuccessfully
+         s←(⊃⍵)+⊃⍺          ⍝ add the two current sums
+         s=half:(≢⍺)(≢⍵)    ⍝ solution found: return positions
+         s>half:⍺ ∇ 1↓⍵     ⍝ current sum is too big: reduce
+         (1↓⍺)∇ ⍵           ⍝ current sum is too small: increase
+     }
+     
+          ⍝ Find a solution; return ⍬ if there is no solution
+     r←v1s it⌽v2s
+     r≡⍬:⍬
+     
+          ⍝ Otherwise: return the two resulting sets of numbers
+     i1←1+(≢v1s)-r[1]
+     i2←r[2]
+     a1←(G1s[i1;]/s1),G2s[i2;]/s2
+     a2←((~G1s[i1;])/s1),(~G2s[i2;])/s2
+     a1 a2
  }
 
  CheckDigit←{
