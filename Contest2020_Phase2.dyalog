@@ -37,18 +37,16 @@ Reaction←''
           ⍝ This approach only works for non-negative numbers.
           ⍝ Otherwise, it performs better than Algorithms B&C when the
           ⍝ numbers are small.
-     th←500÷2*(0.15×0⌈20-≢⍵)    ⍝ empiric threshold for when A is the fastest
-     (15≤≢⍵)∧(half<th)∧(∧/0∘≤)nums:(gcd×⊢)BalanceRecursive nums
+     th←200÷2*(0.3×0⌈20-≢⍵)    ⍝ empiric threshold for when A is the fastest
+     (12≤≢⍵)∧(half<th)∧(∧/0∘≤)nums:(gcd×⊢)BalanceRecursive nums
      
           ⍝ Algorithm B: Horowitz–Sahni algorithm.
-          ⍝ The running time doesn't depend on the magnitude of the numbers as much.
           ⍝ The complexity is smaller than for Algorithm C,
-          ⍝ but Algorithm C still outperforms Algorithm B for fewer numbers.
+          ⍝ but Algorithm C still outperforms this algorithm for fewer numbers.
      15<≢⍵:(gcd×⊢)BalanceSplits nums
      
           ⍝ Algorithm C: Matrix multiplication. Time complexity: O((≢nums)×2*≢nums).
-          ⍝ The running time doesn't depend on the magnitude of the numbers as much.
-          ⍝ This approach also finds all possible solutions simultaneously.
+          ⍝ This approach finds all possible solutions simultaneously.
           ⍝ Steps:
           ⍝ 1) Assume that the first number will go to the first part.
           ⍝    This breaks symmetry and reduces the search space by half.
@@ -106,6 +104,7 @@ Reaction←''
  BalanceSplits←{
           ⍝ Another approach to the Balancing the Scales problem.
           ⍝ Inspired by the Horowitz–Sahni algorithm for the subset sum problem.
+          ⍝ Time complexity: O((⌈2÷⍨≢nums)×2*⌈2÷⍨≢nums).
      
           ⍝ It's similar to the "brute force" approach (Algorithm C),
           ⍝ but it arbitrarily splits the set of numbers into two subsets
@@ -120,10 +119,9 @@ Reaction←''
      ⍺←2÷⍨+/⍵ ⋄ ⍺≠⌊half←⍺:⍬
      
           ⍝ Split the numbers into two sets of roughly equal size.
-     h1←⌊2÷⍨s←≢⍵
-     h2←s-h1
-     mask←(1@(h1?s))s⍴0
-     s1 s2←(mask/⍵)((~mask)/⍵)
+     h2←s-h1←⌊2÷⍨s←≢⍵           ⍝ sizes of each set
+     mask←(1@(h1?s))s⍴0         ⍝ mask for the first set
+     s1 s2←(mask/⍵)((~mask)/⍵)  ⍝ the two sets
      
           ⍝ Generate all boolean masks for these sets
      G1←(h1⍴2)⊤⊢¯1+⍳2*h1
@@ -134,33 +132,29 @@ Reaction←''
      g1←⊂⍋v1←s1+.×G1
      g2←⊂⍋v2←s2+.×G2
      
-          ⍝ Sort the subset masks according to their sums.
-     G1s←g1⌷⍉G1
-     G2s←g2⌷⍉G2
-     
-          ⍝ Sort the sums themselves.
-     v1s←g1⌷v1
-     v2s←g2⌷v2
-     
           ⍝ Helper function to iterate through the two sorted vectors of sums
           ⍝ and find which two subsets add up to the half of the total sum.
      it←{
-         (0=≢⍺)∨0=≢⍵:⍬      ⍝ reached the end unsuccessfully
+         (0=≢⍺)∨0=≢⍵:⍬      ⍝ reached the end unsuccessfully: return ⍬
          s←(⊃⍵)+⊃⍺          ⍝ add the two current sums
-         s=half:(≢⍺)(≢⍵)    ⍝ solution found: return positions
+         s=half:(≢⍺)(≢⍵)    ⍝ solution found: return the positions
          s>half:⍺ ∇ 1↓⍵     ⍝ current sum is too big: reduce
          (1↓⍺)∇ ⍵           ⍝ current sum is too small: increase
      }
      
-          ⍝ Find a solution; return ⍬ if there is no solution
-     r←v1s it⌽v2s
-     r≡⍬:⍬
+          ⍝ 1) Sort the sums.
+          ⍝ 2) Pass them to the helper function to search for a solution.
+          ⍝ 3) Return ⍬ if there is no solution.
+     ⍬≡r←(g1⌷v1)it⌽g2⌷v2:⍬
      
-          ⍝ Otherwise: return the two resulting sets of numbers
-     i1←1+(≢v1s)-r[1]
-     i2←r[2]
-     a1←(G1s[i1;]/s1),G2s[i2;]/s2
-     a2←((~G1s[i1;])/s1),(~G2s[i2;])/s2
+          ⍝ Otherwise: return the two resulting sets of numbers.
+          ⍝ 1) Convert the offsets of the ordered sums into offsets of masks.
+          ⍝ 2) Find the complete set of numbers that sum up to half (a1).
+          ⍝ 3) Find the complementary set with all the other numbers (a2).
+     i1←(⊃g1)[1+(≢v1)-r[1]]
+     i2←(⊃g2)[r[2]]
+     a1←(G1[;i1]/s1),G2[;i2]/s2
+     a2←((~G1[;i1])/s1),(~G2[;i2])/s2
      a1 a2
  }
 
