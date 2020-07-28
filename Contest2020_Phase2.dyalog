@@ -174,12 +174,14 @@ Reaction←''
           ⍝ Problem 1, Task 1 - DiveScore
      
           ⍝ Straightforward calculation:
-          ⍝ 1) Obtain the sorting permutation vector with grade up
-          ⍝ 2) Drop the indices for the lowest outliers and take the middle three indices
-          ⍝ 3) Sum the scores for the remaining indices
-          ⍝ 4) Multiply by difficulty
+          ⍝ 1) Obtain the sorting indices with grade up.
+          ⍝ 2) Drop the indices for the lowest outliers
+          ⍝    and take the middle three.
+          ⍝ 3) Obtain the scores for these indices.
+          ⍝ 4) Sum them up and multiply by difficulty.
+          ⍝ 5) Round to at most 2 decimal places.
      
-     ⍺×+/⍵[3↑(2÷⍨¯3+≢⍵)↓⍋⍵]
+     2(⍎⍕)⍺×+/⍵[3↑(2÷⍨¯3+≢⍵)↓⍋⍵]
  }
 
  Merge←{
@@ -191,8 +193,9 @@ Reaction←''
      ns←⎕JSON⊃⎕NGET ⍵
      names←ns.⎕NL ¯2
      
-          ⍝ 1) Load the template file, find all the at signs and find a
-          ⍝    partitioning of text based on positions of the at signs.
+          ⍝ 1) Load the template file (variable "template").
+          ⍝    Find all the at signs (variable "ats").
+          ⍝    Find a partitioning of text based on positions of at signs ("parts").
           ⍝ 2) Modify the partitioning to place every other at sign into a single
           ⍝    partition with the preceding at sign.
           ⍝    This is achieved by decrementing values at every other at sign
