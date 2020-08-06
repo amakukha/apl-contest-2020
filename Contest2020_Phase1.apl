@@ -27,3 +27,8 @@
 
 ⍝ Problem 10
 {⍕↑⊃,/↓∘⍕¨⍵}
+
+⍝ POST-CONTEST NOTES:
+⍝ Leading ⍕ is unnecessary in task 10 (due to Dimitri Lozeve).
+⍝ A nicer solution for Problem 8: {×/0>2×/2-/10(⊥⍣¯1)⍵}
+⍝   Source: https://github.com/rak1507/APL-Competition-2020

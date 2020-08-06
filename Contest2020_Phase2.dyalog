@@ -221,7 +221,7 @@ Reaction←''
           ⍝ 1) Partition the template.
           ⍝ 2) Replace all the merge areas.
           ⍝ 3) Concatenate the resulting strings.
-     ,/replace¨parts⊆template
+     ,/replace¨parts⊆template       ⍝ POST-CONTEST: leading ⊃ missed here
  }
 
  PastTasks←{
