@@ -465,6 +465,19 @@ Reaction←''
      AR×+\⍺÷AR←×\1+⍵
  }
 
+ ⍝ POST-CONTEST: Recurrent approach. I would rather go with something
+ ⍝ like this to avoid division (as in my submitted solution above).
+ rr_rec←{
+          ⍝ 2020 APL Problem Solving Competition Phase II
+          ⍝ Problem 5, Task 1 - rr
+     rec←{
+         0=≢∊⍵:⍺
+         r M←(∊1↑⍵)(1↓⍵)
+         (⍺,r[1]+r[2]×⊃⌽⍺)∇ M
+     }
+     ⍬ rec⍉↑(⍺)(1+⍵)
+ }
+
  sset←{
           ⍝ 2020 APL Problem Solving Competition Phase II
           ⍝ Problem 4, Task 2 - sset
@@ -485,6 +498,7 @@ Reaction←''
           ⍝       find x*((n-1)÷2) modulus n (recursively), square it, multiply by 2
           ⍝       (because the extra element can be either included or excluded),
           ⍝       find the residue modulus 1e6 and return the result.
+          ⍝ POST-CONTEST: instead of "modulus n" should read "modulus 1e6"
      
           ⍝ Taking the residue ensures that we always hold the lower 6 decimal
           ⍝ digits (up to 20 bits) towards the final product 2*n.
