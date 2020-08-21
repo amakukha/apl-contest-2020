@@ -19,6 +19,14 @@ Developed using Dyalog APL 18.0.
      a [recurrent solution](https://github.com/amakukha/apl-contest-2020/blob/c9155e8436038cc155e8c9f966f4ab93d3c4404d/Contest2020_Phase2.dyalog#L468) instead,
      which avoids the division operation.
 
+## Result
+I won the Grand Prize (2500 USD + invitation to [Dyalog '21](https://www.dyalog.com/user-meetings/dyalog21.htm) conference).
+
+## My take
+Totally recommended!
+
+This was a lot of fun and Dyalog APL is a useful tool to learn.
+
 ## Advice for future contestants
  - Use [dfns](https://aplwiki.com/wiki/Dfn) instead of [tradfns](https://aplwiki.com/wiki/Defined_function).
  - Use `dfns.cmpx` for profiling.
