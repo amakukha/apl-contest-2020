@@ -33,3 +33,5 @@ This was a lot of fun and Dyalog APL is a useful tool to learn.
  - Use [APLcart.info](https://aplcart.info) to find idioms.
  - Always use `]Boxing on -style=max -trains=tree`
  - Study algorithms.
+
+If you want to learn more, you can [watch my talk at Dyalog'20](https://www.youtube.com/watch?v=YB5wNW68-lM) titled "How I Won the APL Problem Solving Competition".
