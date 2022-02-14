@@ -20,7 +20,7 @@ Developed using Dyalog APL 18.0.
      which avoids the division operation.
 
 ## Result
-I won the Grand Prize (2500 USD + invitation to [Dyalog '21](https://www.dyalog.com/user-meetings/dyalog21.htm) conference).
+I won the Grand Prize (2500 USD + invitation to [Dyalog '20](https://www.dyalog.com/user-meetings/dyalog20.htm) conference).
 
 ## My take
 Totally recommended!
